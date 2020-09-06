@@ -49,9 +49,6 @@ def main():
             data = re.search('\n(.+?)\n', data)
             if (data):
                 data = json.loads(data.group(1))
-            # for line in data.splitlines():
-            #     if(is_json(line)):
-            #         data = json.loads(line)
             if not isinstance(data, str):
                 # data['steering_input'] = 1
                 print("received data: ", data)  # steering_input
