@@ -11,8 +11,8 @@ import win32gui
 import win32ui
 from PIL import Image
 
-def captureScreen():
-    hwnd = win32gui.FindWindow(None, 'Calculator')
+def captureScreen(): # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
+    hwnd = win32gui.FindWindow(None, 'BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64')
     left, top, right, bot = win32gui.GetWindowRect(hwnd)
     w = right - left
     h = bot - top
@@ -31,11 +31,11 @@ def captureScreen():
         'RGB',
         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
         signedIntsArray, 'raw', 'BGRX', 0, 1))
-    # cv2.imshow('window', img)
+    cv2.imshow('window', img)
     print(wDC) 
-    cv2.imshow('window', cv2.cvtColor(img, cv2.COLOR_RGBA2RGB))
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    # cv2.imshow('window', cv2.cvtColor(img, cv2.COLOR_RGBA2RGB))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     # Free Resources
     dcObj.DeleteDC()
     cDC.DeleteDC()
