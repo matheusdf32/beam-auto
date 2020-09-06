@@ -16,7 +16,8 @@ from PIL import Image
 # alt u hides hud ingmae
 def captureScreen(): # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
     printscreen = np.array(ImageGrab.grab(bbox=(62,40,960,540)))
-    # cv2.imshow('window', cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB))
+    cv2.imshow('window', cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB))
+    cv2.waitKey(1)
     return printscreen
 
 def is_json(myjson):
@@ -33,24 +34,22 @@ def main():
     s.bind((TCP_IP, TCP_PORT))
     s.listen(1)
     conn, addr = s.accept()
+    last_time = time.time()
     while 1:
         data = conn.recv(128)
         # data = re.search('\n(.*)\n', str(data, 'utf-8') )
         data = str(data, 'utf-8')
+        img = captureScreen()
         for line in data.splitlines():
             if(is_json(line)):
                 data = json.loads(line)
         if not isinstance(data, str):
-            # data = json.loads(data)
-            img = captureScreen()
             # data['steering_input'] = 1
             print("received data: ", data)  # steering_input
             toSend = {}
-
-        # if (data['speed'] < 16.6):
-        #     toSend = {'throttle_input': 1}
-
+            print('running at {} fps'.format(1 / (time.time() - last_time)))
         conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
+        last_time = time.time()
     conn.close()
 
 
