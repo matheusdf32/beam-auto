@@ -37,7 +37,6 @@ def main():
     last_time = time.time()
     while 1:
         data = conn.recv(128)
-        # data = re.search('\n(.*)\n', str(data, 'utf-8') )
         data = str(data, 'utf-8')
         img = captureScreen()
         for line in data.splitlines():
