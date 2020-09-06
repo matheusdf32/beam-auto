@@ -32,7 +32,7 @@ def captureScreen():
         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
         signedIntsArray, 'raw', 'BGRX', 0, 1))
     # cv2.imshow('window', img)
-    print(wDC)
+    print(wDC) 
     cv2.imshow('window', cv2.cvtColor(img, cv2.COLOR_RGBA2RGB))
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
