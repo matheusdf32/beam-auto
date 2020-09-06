@@ -8,24 +8,27 @@ import re
 import win32con
 from PIL import ImageGrab
 import cv2
-from mss import mss
+import mss
 import win32gui
 import win32ui
 from PIL import Image
 
+
 # alt u hides hud ingmae
-def captureScreen(): # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
-    printscreen = np.array(ImageGrab.grab(bbox=(62,40,960,540)))
-    cv2.imshow('window', cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB))
-    cv2.waitKey(1)
+def captureScreen():  # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
+    printscreen = np.array(ImageGrab.grab(bbox=(62, 40, 960, 540)))
+    # cv2.imshow('window', cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB))
+    # cv2.waitKey(1)
     return printscreen
 
+
 def is_json(myjson):
-  try:
-    json_object = json.loads(myjson)
-  except ValueError as e:
-    return False
-  return True
+    try:
+        json_object = json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+
 
 def main():
     TCP_IP = '127.0.0.1'
@@ -35,20 +38,28 @@ def main():
     s.listen(1)
     conn, addr = s.accept()
     last_time = time.time()
+    frameQueue = 0
     while 1:
-        data = conn.recv(128)
-        data = str(data, 'utf-8')
+        toSend = {}
+        frameQueue += 1
         img = captureScreen()
-        for line in data.splitlines():
-            if(is_json(line)):
-                data = json.loads(line)
-        if not isinstance(data, str):
-            # data['steering_input'] = 1
-            print("received data: ", data)  # steering_input
-            toSend = {}
-            print('running at {} fps'.format(1 / (time.time() - last_time)))
-        conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
-        last_time = time.time()
+        if img.any():
+            data = conn.recv(128)
+            data = str(data, 'utf-8')
+            data = re.search('\n(.+?)\n', data)
+            if (data):
+                data = json.loads(data.group(1))
+            # for line in data.splitlines():
+            #     if(is_json(line)):
+            #         data = json.loads(line)
+            if not isinstance(data, str):
+                # data['steering_input'] = 1
+                print("received data: ", data)  # steering_input
+                print('running at {} fps'.format(1 / (time.time() - last_time)) + ' queue: ' + str(frameQueue))
+                frameQueue -= 1
+
+            # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
+            last_time = time.time()
     conn.close()
 
 
