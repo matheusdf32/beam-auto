@@ -59,66 +59,15 @@ def main():
     b.start()
     last_time = time.time()
     frameQueue = 0
-    # while 1:
-    #     toSend = {}
-    #     frameQueue += 1
-    #     # data = conn.recv(128)
-    #     # data = str(data, 'utf-8')
-    #     # print("received data: ", data)  # steering_input
-    #     # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))
-    #     img = captureScreen()
-    #     data = conn.recv(128)
-    #     if not img.any(): pass
-    #     data = str(data, 'utf-8')
-    #     data = re.search('\n(.+?)\n', data)
-    #     if (data):
-    #         data = json.loads(data.group(1))
-    #     if not isinstance(data, str):
-    #         # data['steering_input'] = 1
-    #         print("received data: ", data)  # steering_input
-    #         print('running at {} fps'.format(1 / (time.time() - last_time)) + ' queue: ' + str(frameQueue))
-    #         frameQueue -= 1
-    #
-    #     # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
-    #     last_time = time.time()
-
-    # img = captureScreen()
-    # print(img.all())
-    # return
-
 
     while 1:
         frameQueue += 1
-
-        # data = conn.recv(128)
-        # data = str(data, 'utf-8')
-        # data = re.search('\n(.+?)\n', data)
-        # # if data:
-        # #     print("received data: ", data)
-        # #     data = json.loads(data.group(1))
-        # if not isinstance(data, str) and data:
-        #     data = json.loads(data.group(1))
-        # else:
-        #     pass
-        # print("throttle_input: ", data["throttle_input"])
-        print("throttle_input: ", data["throttle_input"])
         img = d.screenshot(region=(62, 40, 960, 540))
         imageShow(img)
-        # print(img[0][0], data)
-
-        # print(img[0][0], "adsfas")
-        # if img.any():
-        #     pass
-        # data = str(data, 'utf-8')
-        # data = re.search('\n(.+?)\n', data)
-        # if (data):
-        #     data = json.loads(data.group(1))
-        # if not isinstance(data, str):
-        #     # data['steering_input'] = 1
-        #     print("received data: ", data)  # steering_input
-        #     print('running at {} fps'.format(1 / (time.time() - last_time)) + ' queue: ' + str(frameQueue))
-        #     frameQueue -= 1
-        print('running at {} fps'.format(1 / (time.time() - last_time)) + ' queue: ' + str(frameQueue))
+        print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
+              + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
+              + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
+              + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
 
         # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
         last_time = time.time()
