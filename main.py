@@ -27,7 +27,7 @@ def captureScreen():  # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
     return printscreen
 
 def imageShow(img):
-    cv2.imshow('window', cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    cv2.imshow('window', img)
     cv2.waitKey(1)
 
 def is_json(myjson):
@@ -63,6 +63,7 @@ def main():
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         imageShow(img)
         print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
               + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
