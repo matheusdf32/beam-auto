@@ -9,7 +9,7 @@ import re
 from PIL import ImageGrab
 import cv2
 # import mss
-import d3dshot # https://pypi.org/project/d3dshot/
+import d3dshot  # https://pypi.org/project/d3dshot/
 # import win32gui
 # import win32ui
 import asyncio
@@ -19,16 +19,17 @@ from PIL import Image
 d = d3dshot.create(capture_output="numpy")
 data = {'throttle_input': 0, 'steering_input': 0, 'speed': 0}
 
-# alt u hides hud ingmae
+
+# alt u hides hud ingame
 def captureScreen():  # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
-    # printscreen = np.array(ImageGrab.grab(bbox=(62, 40, 960, 540)))
     printscreen = d.screenshot(region=(62, 40, 960, 540))
-    # cv2.imshow('window', cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB))
     return printscreen
+
 
 def imageShow(img):
     cv2.imshow('window', img)
     cv2.waitKey(1)
+
 
 def is_json(myjson):
     try:
@@ -36,6 +37,7 @@ def is_json(myjson):
     except ValueError as e:
         return False
     return True
+
 
 def getData(conn):
     while 1:
@@ -45,6 +47,7 @@ def getData(conn):
         data = json.loads(data)
         # print(data)
 
+
 def main():
     loop = asyncio.get_event_loop()
     TCP_IP = '127.0.0.1'
@@ -53,18 +56,27 @@ def main():
     s.bind((TCP_IP, TCP_PORT))
     s.listen(1)
     conn, addr = s.accept()
-    # loop = asyncio.get_event_loop()
-    # loop.subprocess_exec(getData(conn))
+
     b = threading.Thread(name='getData', target=getData, args=[conn])
     b.start()
     last_time = time.time()
     frameQueue = 0
 
+    width, height = 960, 540
+    pts1 = np.float32([[323, 238], [581, 219], [89, 390], [835, 394]])
+    pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+
+
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        imageShow(img)
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # imageShow(img)
+        imgOut = cv2.warpPerspective(img, matrix, (width, height))
+        imageShow(imgOut)
+
         print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
               + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
               + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
