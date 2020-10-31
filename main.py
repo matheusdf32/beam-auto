@@ -47,6 +47,7 @@ def getData(conn):
         data = json.loads(data)
         # print(data)
 
+
 def process_binary(img):
     """ Process image to generate a sanitized binary image
     Args:
@@ -75,14 +76,17 @@ def process_binary(img):
 
     return combined_binary
 
+
 def do_canny(frame):
     # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     # Applies a 5x5 gaussian blur with deviation of 0 to frame - not mandatory since Canny will do this for us
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    # gray = cv2.GaussianBlur(gray, (3, 3), 0)
+    # return gray
     # Applies Canny edge detector with minVal of 50 and maxVal of 150
-    canny = cv2.Canny(blur, 50, 150)
+    canny = cv2.Canny(gray, 10, 60)
     return canny
+
 
 def main():
     loop = asyncio.get_event_loop()
@@ -99,22 +103,33 @@ def main():
     frameQueue = 0
 
     width, height = 960, 540
-    pts1 = np.float32([[409, 275], [539, 274], [122, 393], [757, 394]])
+    pts1 = np.float32([[350, 240], [550, 240], [240, 400], [800, 400]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-
 
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        img[..., 1] = img[..., 1] * 2
+
+        sensitivity = 35
+        lower_white = np.array([0, 0, 255 - sensitivity])
+        upper_white = np.array([255, sensitivity, 255])
+        mask = cv2.inRange(img, lower_white, upper_white)
+        img = cv2.bitwise_and(img, img, mask=mask)
+
+
+
         # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        imgOut = do_canny(img)
-        imgOut = cv2.warpPerspective(imgOut, matrix, (width, height))
+        img = cv2.warpPerspective(img, matrix, (width, height))
+        img = do_canny(img)
 
         # imageShow(img)
 
-        imageShow(imgOut)
+        imageShow(img)
 
         print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
               + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
