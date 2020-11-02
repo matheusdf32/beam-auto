@@ -84,7 +84,7 @@ def do_canny(frame):
     # gray = cv2.GaussianBlur(gray, (3, 3), 0)
     # return gray
     # Applies Canny edge detector with minVal of 50 and maxVal of 150
-    canny = cv2.Canny(gray, 10, 60)
+    canny = cv2.Canny(gray, 50, 100)
     return canny
 
 
