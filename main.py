@@ -80,13 +80,16 @@ def process_binary(img):
 def do_canny(frame):
     # Converts frame to grayscale because we only need the luminance channel for detecting edges - less computationally expensive
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    # Applies a 5x5 gaussian blur with deviation of 0 to frame - not mandatory since Canny will do this for us
-    # gray = cv2.GaussianBlur(gray, (3, 3), 0)
-    # return gray
-    # Applies Canny edge detector with minVal of 50 and maxVal of 150
     canny = cv2.Canny(gray, 50, 100)
     return canny
 
+def display_lines(image, lines):
+    line_image = np.zeros_like(image)
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line.reshape(4)
+            cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+    return line_image
 
 def main():
     loop = asyncio.get_event_loop()
@@ -120,21 +123,17 @@ def main():
         mask = cv2.inRange(img, lower_white, upper_white)
         img = cv2.bitwise_and(img, img, mask=mask)
 
-
-
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.warpPerspective(img, matrix, (width, height))
         img = do_canny(img)
-
-        # imageShow(img)
-
+        lines = cv2.HoughLinesP(img, 3, np.pi/180, 50, np.array([]), minLineLength=20, maxLineGap=5)
+        img = display_lines(img, lines)
+        # print(lines)
         imageShow(img)
 
-        print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
-              + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
-              + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
-              + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
+        # print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
+        #       + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
+        #       + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
+        #       + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
 
         # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
         last_time = time.time()
