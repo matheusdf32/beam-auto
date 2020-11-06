@@ -106,7 +106,8 @@ def main():
     frameQueue = 0
 
     width, height = 960, 540
-    pts1 = np.float32([[350, 240], [550, 240], [240, 400], [800, 400]])
+    # pts1 = np.float32([[350, 240], [550, 240], [240, 400], [800, 400]])
+    pts1 = np.float32([[0, 220], [900, 220], [100, 380], [900, 380]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
 
