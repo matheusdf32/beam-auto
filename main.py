@@ -126,7 +126,7 @@ def main():
 
         img = cv2.warpPerspective(img, matrix, (width, height))
         img = do_canny(img)
-        lines = cv2.HoughLinesP(img, 3, np.pi/180, 50, np.array([]), minLineLength=20, maxLineGap=5)
+        lines = cv2.HoughLinesP(img, 3, np.pi/180, 50, np.array([]), minLineLength=30, maxLineGap=15)
         img = display_lines(img, lines)
         # print(lines)
         imageShow(img)
