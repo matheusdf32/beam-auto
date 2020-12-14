@@ -16,10 +16,11 @@ import asyncio
 import threading
 from PIL import ImageFilter
 from PIL import Image
+from beamngDecisionComponent import BeamNgDecisionComponent
 
 d = d3dshot.create(capture_output="numpy")
 data = {'throttle_input': 0, 'steering_input': 0, 'speed': 0}
-
+toSend = {}
 
 # alt u hides hud ingame
 def captureScreen():  # BeamNG.drive - 0.20.2.0.10611 - RELEASE - x64
@@ -43,9 +44,11 @@ def is_json(myjson):
 def getData(conn):
     while 1:
         global data
+        global toSend
         data = conn.recv(128)
         # data = re.search('\n(.+?)\n', data)
         data = json.loads(data)
+        conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))
         # print(data)
 
 def display_lines(image, lines):
@@ -76,7 +79,7 @@ def main():
     pts1 = np.float32([[0, 220], [900, 220], [100, 380], [900, 380]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-
+    decisionComponent = BeamNgDecisionComponent(0.5, 3, 3, 0.9)
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
@@ -85,20 +88,35 @@ def main():
         blur = cv2.GaussianBlur(rgb, (5, 5), 0)
 
         grad = np.asarray(Image.fromarray(blur)
+                          # .filter(ImageFilter.SMOOTH_MORE)
+                          # .filter(ImageFilter.SMOOTH_MORE)
+                          .filter(ImageFilter.FIND_EDGES)
+                          .filter(ImageFilter.SMOOTH_MORE)
+                          .filter(ImageFilter.SMOOTH_MORE)
                           .filter(ImageFilter.FIND_EDGES)
                           .filter(ImageFilter.EDGE_ENHANCE_MORE)
+                          # .filter(ImageFilter.SMOOTH_MORE)
                           )
         gray = cv2.cvtColor(grad, cv2.COLOR_RGB2GRAY)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
 
         img = cv2.warpPerspective(gray, matrix, (width, height))
+        finalFrame = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY)[1]
 
-        imageShow(cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)[1])
+        # print(decisionComponent.decide(finalFrame)*-1)
+        steering_input = decisionComponent.decide(finalFrame)*-1
 
-        print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
-              + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
-              + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
-              + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
+        toSend['throttle_input'] = 0.5 if data['speed'] < 40 else 0
+        toSend['steering_input'] = steering_input
+
+        imageShow(finalFrame)
+
+
+
+        # print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
+        #       + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
+        #       + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
+        #       + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
 
         # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
         last_time = time.time()
