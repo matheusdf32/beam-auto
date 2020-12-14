@@ -14,6 +14,7 @@ import d3dshot  # https://pypi.org/project/d3dshot/
 # import win32ui
 import asyncio
 import threading
+from PIL import ImageFilter
 from PIL import Image
 
 d = d3dshot.create(capture_output="numpy")
@@ -48,33 +49,33 @@ def getData(conn):
         # print(data)
 
 
-def process_binary(img):
-    """ Process image to generate a sanitized binary image
-    Args:
-        img: undistorted image in BGR
-    Returns:
-        Binary image
-    """
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
-    abs_sobelx = np.absolute(sobelx)
-    scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
-    sxbinary = np.zeros_like(scaled_sobel)
-    retval, sxthresh = cv2.threshold(scaled_sobel, 30, 150, cv2.THRESH_BINARY)
-    sxbinary[(sxthresh >= 30) & (sxthresh <= 150)] = 1
-
-    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    s_channel = hls[:, :, 2]
-    s_binary = np.zeros_like(s_channel)
-    # cv2.inRange sets 255 if in range other wise 0
-    s_thresh = cv2.inRange(s_channel.astype('uint8'), 175, 250)
-    # set 255 to 1
-    s_binary[(s_thresh == 255)] = 1
-
-    combined_binary = np.zeros_like(gray)
-    combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
-
-    return combined_binary
+# def process_binary(img):
+#     """ Process image to generate a sanitized binary image
+#     Args:
+#         img: undistorted image in BGR
+#     Returns:
+#         Binary image
+#     """
+#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+#     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
+#     abs_sobelx = np.absolute(sobelx)
+#     scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
+#     sxbinary = np.zeros_like(scaled_sobel)
+#     retval, sxthresh = cv2.threshold(scaled_sobel, 30, 150, cv2.THRESH_BINARY)
+#     sxbinary[(sxthresh >= 30) & (sxthresh <= 150)] = 1
+#
+#     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+#     s_channel = hls[:, :, 2]
+#     s_binary = np.zeros_like(s_channel)
+#     # cv2.inRange sets 255 if in range other wise 0
+#     s_thresh = cv2.inRange(s_channel.astype('uint8'), 175, 250)
+#     # set 255 to 1
+#     s_binary[(s_thresh == 255)] = 1
+#
+#     combined_binary = np.zeros_like(gray)
+#     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
+#
+#     return combined_binary
 
 
 def do_canny(frame):
@@ -83,6 +84,7 @@ def do_canny(frame):
     canny = cv2.Canny(gray, 50, 100)
     return canny
 
+
 def display_lines(image, lines):
     line_image = np.zeros_like(image)
     if lines is not None:
@@ -90,6 +92,7 @@ def display_lines(image, lines):
             x1, y1, x2, y2 = line.reshape(4)
             cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
     return line_image
+
 
 def main():
     loop = asyncio.get_event_loop()
@@ -114,27 +117,54 @@ def main():
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        img[..., 1] = img[..., 1] * 2
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ddepth = cv2.CV_64F
+        scale = 3
+        delta = 0
+        blur = cv2.GaussianBlur(rgb, (5, 5), 0)
+        # gradx = cv2.Sobel(blur, ddepth, 1, 0, dst=0, ksize=13)
+        # grady = cv2.Sobel(blur, ddepth, 0, 1, dst=0, ksize=13)
+        # grad = (gradx ** 2 + grady ** 2) ** 0.5
 
-        sensitivity = 35
-        lower_white = np.array([0, 0, 255 - sensitivity])
-        upper_white = np.array([255, sensitivity, 255])
-        mask = cv2.inRange(img, lower_white, upper_white)
-        img = cv2.bitwise_and(img, img, mask=mask)
+        grad = np.asarray(Image.fromarray(blur)
+                          .filter(ImageFilter.FIND_EDGES)
+                          .filter(ImageFilter.EDGE_ENHANCE_MORE)
+                          )
+        gray = cv2.cvtColor(grad, cv2.COLOR_RGB2GRAY)
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
 
-        img = cv2.warpPerspective(img, matrix, (width, height))
-        img = do_canny(img)
-        lines = cv2.HoughLinesP(img, 3, np.pi/180, 50, np.array([]), minLineLength=30, maxLineGap=15)
-        img = display_lines(img, lines)
+        # laplacian = cv2.Laplacian(blur, cv2.CV_64F)
+
+        # sensitivity = 35
+        # lower_white = np.array([0, 0, 255 - sensitivity])
+        # upper_white = np.array([255, sensitivity, 255])
+        # mask = cv2.inRange(gray, lower_white, upper_white)
+
+        img = cv2.warpPerspective(gray, matrix, (width, height))
+
+        imageShow(cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)[1])
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # img[..., 1] = img[..., 1] * 2
+        #
+        # sensitivity = 35
+        # lower_white = np.array([0, 0, 255 - sensitivity])
+        # upper_white = np.array([255, sensitivity, 255])
+        # mask = cv2.inRange(img, lower_white, upper_white)
+        # img = cv2.bitwise_and(img, img, mask=mask)
+        #
+        # img = cv2.warpPerspective(img, matrix, (width, height))
+        # img = do_canny(img)
+        # lines = cv2.HoughLinesP(img, 3, np.pi/180, 50, np.array([]), minLineLength=30, maxLineGap=15)
+        # img = display_lines(img, lines)
         # print(lines)
-        imageShow(img)
+        # imageShow(img)
 
-        # print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
-        #       + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
-        #       + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
-        #       + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
+        print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
+              + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
+              + " speed: " + '{0:,.2f}'.format(data["speed"] * 3.6) + "km/h"
+              + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
 
         # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
         last_time = time.time()
