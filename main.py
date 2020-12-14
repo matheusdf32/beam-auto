@@ -59,6 +59,14 @@ def display_lines(image, lines):
             cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
     return line_image
 
+def region_of_interest(image):
+    height = image.shape[0]
+    polygons = np.array([
+        [(200, height), (700, height), (450, 200)]
+    ])
+    mask = np.zeros_like(image)
+    cv2.fillPoly(mask, polygons, 255)
+    return mask
 
 def main():
     loop = asyncio.get_event_loop()
@@ -79,7 +87,7 @@ def main():
     pts1 = np.float32([[0, 220], [900, 220], [100, 380], [900, 380]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    decisionComponent = BeamNgDecisionComponent(0.5, 3, 3, 0.9)
+    decisionComponent = BeamNgDecisionComponent(0.5, 5, 7, 0.8)
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
@@ -88,14 +96,8 @@ def main():
         blur = cv2.GaussianBlur(rgb, (5, 5), 0)
 
         grad = np.asarray(Image.fromarray(blur)
-                          # .filter(ImageFilter.SMOOTH_MORE)
-                          # .filter(ImageFilter.SMOOTH_MORE)
-                          .filter(ImageFilter.FIND_EDGES)
-                          .filter(ImageFilter.SMOOTH_MORE)
-                          .filter(ImageFilter.SMOOTH_MORE)
                           .filter(ImageFilter.FIND_EDGES)
                           .filter(ImageFilter.EDGE_ENHANCE_MORE)
-                          # .filter(ImageFilter.SMOOTH_MORE)
                           )
         gray = cv2.cvtColor(grad, cv2.COLOR_RGB2GRAY)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -109,7 +111,7 @@ def main():
         toSend['throttle_input'] = 0.5 if data['speed'] < 40 else 0
         toSend['steering_input'] = steering_input
 
-        imageShow(finalFrame)
+        imageShow(region_of_interest(rgb))
 
 
 
