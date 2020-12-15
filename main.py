@@ -99,8 +99,8 @@ def main():
     pts1 = np.float32([[0, 240], [900, 240], [100, 380], [900, 380]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    decisionComponent = BeamNgDecisionComponent(1, 3, 6, 1.1)
-    speedLimit = 30
+    decisionComponent = BeamNgDecisionComponent(1, 3, 6, 1.1) # sweetspot: (1, 3, 6, 1.1)
+    speedLimit = 90 # sweetspot: 10
     while 1:
         img = d.screenshot(region=(62, 40, 960, 540))
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
