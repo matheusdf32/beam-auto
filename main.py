@@ -48,15 +48,14 @@ def getData(conn):
     while 1:
         global data
         global toSend
-        data = conn.recv(128)
         # data = re.search('\n(.+?)\n', data)
-        data = json.loads(data)
         try:
+            # data = conn.recv(128)
+            data = json.loads(conn.recv(128))
             conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))
         except:
             print('conexao interrompida')
             pass
-        # print(data)
 
 
 def display_lines(image, lines):
@@ -118,11 +117,11 @@ def main():
         img2 = cv2.warpPerspective(gray, matrix, (width, height))
         finalFrame = cv2.threshold(img2, 80, 255, cv2.THRESH_BINARY)[1]
         steering_input = decisionComponent.decide(finalFrame) * -1
-        toSend['throttle_input'] = 1 if data['speed'] < speedLimit else 0
+        toSend['throttle_input'] = 1.0 if data['speed'] < speedLimit else 0.0
         # toSend['brake_input'] = 1 if data['speed'] < speedLimit + 1 else 0
         toSend['steering_input'] = steering_input
 
-        imageShow(rgb)
+        imageShow(finalFrame)
 
     conn.close()
 
