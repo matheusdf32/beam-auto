@@ -50,8 +50,13 @@ def getData(conn):
         global toSend
         data = conn.recv(128)
         # data = re.search('\n(.+?)\n', data)
+        print(data)
         data = json.loads(data)
-        conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))
+        try:
+            conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))
+        except:
+            print('conexao interrompida')
+            pass
         # print(data)
 
 
@@ -69,7 +74,7 @@ def region_of_interest(image):
     polygons = np.array([
         # tangle
         # [(200, height), (700, height), (450, 250)]
-        [(400, height-200), (550, height-200), (550, 250), (400, 250), ]
+        [(400, height - 200), (550, height - 200), (550, 250), (400, 250), ]
     ])
     # mask = np.full_like(image, (255, 255, 255), dtype=np.uint8)
     # cv2.fillPoly(mask, polygons, (0, 0, 0))
@@ -78,6 +83,7 @@ def region_of_interest(image):
     masked_img = cv2.bitwise_and(image, mask)
     return masked_img
 
+
 def shadowRemove(img):
     blue, green, red = cv2.split(img)
 
@@ -85,7 +91,10 @@ def shadowRemove(img):
     green[green == 0] = 1
     red[red == 0] = 1
 
+    # print(blue, green, red)
     div = np.multiply(np.multiply(blue, green), red) ** (1.0 / 3)
+    div[div == 0] = 0.1
+    # print(div)
 
     a = np.log1p((blue / div) - 1)
     b = np.log1p((green / div) - 1)
@@ -180,14 +189,17 @@ def shadowRemove(img):
     r_ti2 = 255 * r_ti
     return r_ti2
 
+
 def main():
-    loop = asyncio.get_event_loop()
+    # loop = asyncio.get_event_loop()
     TCP_IP = '127.0.0.1'
     TCP_PORT = 4343
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((TCP_IP, TCP_PORT))
     s.listen(1)
     conn, addr = s.accept()
+    if (conn):
+        print('conexao estabelecida')
 
     b = threading.Thread(name='getData', target=getData, args=[conn])
     b.start()
@@ -196,10 +208,12 @@ def main():
 
     width, height = 960, 540
     # pts1 = np.float32([[350, 240], [550, 240], [240, 400], [800, 400]])
-    pts1 = np.float32([[0, 220], [900, 220], [100, 380], [900, 380]])
+    # pts1 = np.float32([[0, 220], [900, 220], [100, 380], [900, 380]])
+    pts1 = np.float32([[0, 240], [900, 240], [100, 380], [900, 380]])
+    # pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     pts2 = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    decisionComponent = BeamNgDecisionComponent(1, 3, 6, 0.9)
+    decisionComponent = BeamNgDecisionComponent(1, 3, 6, 1.1)
     while 1:
         frameQueue += 1
         img = d.screenshot(region=(62, 40, 960, 540))
@@ -225,12 +239,14 @@ def main():
         # print(decisionComponent.decide(finalFrame)*-1)
         steering_input = decisionComponent.decide(finalFrame) * -1
 
-        toSend['throttle_input'] = 0.5 if data['speed'] < 20 else 0
+        speedLimit = 30
+        toSend['throttle_input'] = 1 if data['speed'] < speedLimit else 0
+        # toSend['brake_input'] = 1 if data['speed'] < speedLimit + 1 else 0
         toSend['steering_input'] = steering_input
 
         # imageShow(region_of_interest(gray))
         # imageShow(region_of_interest(rgb))
-        imageShow(finalFrame)
+        imageShow(rgb)
 
         # print("throttle_input: " + '{0:,.2f}'.format(data["throttle_input"])
         #       + " steering_input: " + '{0:,.2f}'.format(data["steering_input"])
@@ -238,7 +254,7 @@ def main():
         #       + ' running at {0:,.2f} fps'.format(1 / (time.time() - last_time)))
 
         # conn.send((json.dumps(toSend) + '\n\r').encode('utf-8'))  # echo
-        last_time = time.time()
+        # last_time = time.time()
     conn.close()
 
 
