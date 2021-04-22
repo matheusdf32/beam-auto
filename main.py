@@ -41,7 +41,7 @@ def main():  # alt u hides hud ingame
     if (conn):
         print('conexao estabelecida')
 
-    b = threading.Thread(name='getData', target=get_data, args=[conn])
+    b = threading.Thread(name='get_data', target=get_data, args=[conn])
     b.start()
 
     width, height = 960, 540
