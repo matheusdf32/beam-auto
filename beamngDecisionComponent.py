@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import cv2
-import numpy as np
-from PIL import Image
 from typing import List, Tuple
+
+import numpy as np
+from cv2 import cv2
+from PIL import Image
 
 BEAMNG_DEFAULT_IMAGE_CLI = './beamngDecisionComponentDefaultImage.png'
 
