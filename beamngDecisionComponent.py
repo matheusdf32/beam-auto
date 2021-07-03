@@ -28,7 +28,7 @@ class BeamNgDecisionComponent:
         Any image that goes through here becomes binnary Black/White
         '''
         img = np.asarray(Image.fromarray(frame).convert('L'))
-        img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)[1]
+        # img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)[1]
         return img
 
     def analyze(self, frame: np.ndarray) -> Tuple[FloatQuintuple, FloatQuintuple, FloatQuintuple]:

@@ -50,7 +50,7 @@ def main():  # alt u hides hud ingame
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     decision_component = BeamNgDecisionComponent(
         1, 3, 6, 1.1)  # sweetspot: (1, 3, 6, 1.1)
-    speed_limit = 90  # sweetspot: 10
+    speed_limit = 10  # sweetspot: 10
     while 1:
         img = SHOOTER.screenshot(region=(62, 40, 960, 540))
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
